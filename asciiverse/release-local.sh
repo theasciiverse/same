@@ -17,6 +17,7 @@
 set -eu
 cd "$(dirname "$0")/.."
 tag=$1
+repo=theasciiverse/same  # never the upstream remote
 : "${NCURSES_MUSL:?set NCURSES_MUSL}" "${PDCURSES:?set PDCURSES}"
 git diff --quiet "$tag" -- . ':!asciiverse/release-local.sh' 2>/dev/null \
   || { echo "the work tree differs from $tag" >&2; exit 1; }
@@ -32,7 +33,7 @@ PLATFORM=windows CC=x86_64-w64-mingw32-gcc CFLAGS="-O2 -I$PDCURSES" \
 sh asciiverse/package.sh x86_64-pc-windows-msvc build/windows/same.exe
 
 (cd dist && sha256sum * > SHA256SUMS && cat SHA256SUMS)
-gh release view "$tag" >/dev/null 2>&1 \
-  || gh release create "$tag" --verify-tag --title "same $tag" --notes "same ${tag%%-av.*}, Josh Williams' SameGame with vi keys (github.com/jodawill/same), built for the Asciiverse catalog. GPL-2.0. Changes: see PATCHES.md."
-gh release upload "$tag" dist/* --clobber
+gh release view "$tag" -R "$repo" >/dev/null 2>&1 \
+  || gh release create "$tag" -R "$repo" --verify-tag --title "same $tag" --notes "same ${tag%%-av.*}, Josh Williams' SameGame with vi keys (github.com/jodawill/same), built for the Asciiverse catalog. GPL-2.0. Changes: see PATCHES.md."
+gh release upload "$tag" dist/* -R "$repo" --clobber
 rm -rf build stage
