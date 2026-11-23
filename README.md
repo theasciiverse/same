@@ -43,7 +43,7 @@ Command multipliers are supported. For example, to move 5 rows down, type '5j', 
 
 To quit, type ':q'. To save before quitting, type ':x'.
 
-To save the game, type ':w'. Games are stored in '~/.same/NAME.sav'. To open a saved game, type ':e'. Both of these commands may preceed a game name.
+To save the game, type ':w'. Games are stored in '$XDG_STATE_HOME/same/NAME.sav' ('~/.local/state/same' by default; '%LOCALAPPDATA%\same' on Windows). To open a saved game, type ':e'. Both of these commands may preceed a game name.
 
 To play on easy mode, type ':easy'. To go back to hard mode, type ':hard'. There is also a special "god" mode to fill the board with one type of block, mainly for debugging purposes. While in god mode, press ~ to add points. To enable, type ':god'.
 
