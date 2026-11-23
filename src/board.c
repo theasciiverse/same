@@ -51,7 +51,8 @@ int reset_board() {
 
  // Set the dimensions of the display pane.
  display_width = 20;
- display_height = 11;
+ // Tall enough for the logo (rows 0 and 1) above the highscore
+ display_height = 14;
 
  // Set the standard global variables to 0.
  undonum = 0;

@@ -35,17 +35,17 @@ int draw_undo() {
 
 int draw_hst() {
  read_hst();
- if (highscore <= 0) {
-  draw_display(height-11,"Highscore:");
-  draw_display(height-10,"  Not Set  ");
-  draw_display(height-9,"");
-  return 1;
- }
  int h;
  if (height >= display_height) {
   h = height;
  } else {
   h = display_height;
+ }
+ if (highscore <= 0) {
+  draw_display(h-11,"Highscore:");
+  draw_display(h-10,"  Not Set  ");
+  draw_display(h-9,"");
+  return 1;
  }
  draw_display(h-11,"Highscore:");
  char msg[32];
