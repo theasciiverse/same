@@ -102,7 +102,7 @@ int draw_command(const char* text) {
   attron(COLOR_PAIR(COLOR_DEFAULT));
   int a,b;
   getmaxyx(stdscr,a,b);
-  mvprintw(a-1,0,text);
+  mvprintw(a-1,0,"%s",text);
   refresh();
   return 0;
  #endif
@@ -135,7 +135,7 @@ int draw_display(int row,const char* msg) {
   for (int i = width + 1; i < b; i++) {
    mvprintw(row,i," ");
   }
-  mvprintw(row,width + 1,msg);
+  mvprintw(row,width + 1,"%s",msg);
   return 0;
  #endif
  return -1;
@@ -147,7 +147,7 @@ int draw_error(const char* msg) {
   int a,b;
   getmaxyx(stdscr,a,b);
   attron(COLOR_PAIR(COLOR_ERROR));
-  mvprintw(a-1,0,msg);
+  mvprintw(a-1,0,"%s",msg);
   return 0;
  #endif
  return -1;
@@ -205,7 +205,7 @@ int prompt_str(const char msg[],char outstr[],int strn) {
   }
   attron(COLOR_PAIR(COLOR_DEFAULT));
   getmaxyx(stdscr,a,b);
-  mvprintw(a-1,0,msg2);
+  mvprintw(a-1,0,"%s",msg2);
   echo();
   getnstr(outstr,strn);
   noecho();
