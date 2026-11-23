@@ -25,10 +25,9 @@ int read_hst() {
  set_hst_fn();
  FILE *hstf = fopen(hst_fn,"r");
  if (hstf == NULL) {
+  // No file yet just means no highscore yet; the panel says "Not Set"
   if (access(hst_fn,F_OK) != -1) {
    draw_error("Highscore file exists, but cannot be opened to read");
-  } else {
-   draw_command("Highscore file does not exist");
   }
   return 1;
  }
