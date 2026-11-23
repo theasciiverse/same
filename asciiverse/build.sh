@@ -10,16 +10,21 @@
 # -fcommon: same.h defines its globals in the header itself, which GCC 10
 # and Clang 11 stopped merging by default. Outside Alpine on Linux it
 # links the system's ncurses dynamically, for trying it out.
+#
+# Cross builds set PLATFORM (linux, macos or windows), CC, CFLAGS, LIBS
+# and STRIP, e.g. a static Linux build with musl-gcc against a static
+# ncursesw, or Windows with x86_64-w64-mingw32-gcc against PDCurses
+# (asciiverse/release-local.sh).
 set -eu
 cd "$(dirname "$0")/.."
-case "$(uname -s)" in
+[ -n "${PLATFORM:-}" ] && platform=$PLATFORM || case "$(uname -s)" in
   Linux)  platform=linux ;;
   Darwin) platform=macos ;;
   MINGW*|MSYS*|UCRT*|CLANG*) platform=windows ;;
   *) echo "unknown platform $(uname -s)" >&2; exit 1 ;;
 esac
 
-if [ -f /etc/alpine-release ]; then
+if [ -f /etc/alpine-release ] && [ -z "${PLATFORM:-}" ]; then
   apk add --no-cache build-base ncurses-dev ncurses-static >/dev/null
 fi
 
@@ -34,5 +39,6 @@ case $platform in
   macos)   libs="-lncurses"; exe=same ;;
   windows) libs="-static -lpdcurses"; exe=same.exe ;;
 esac
+libs=${LIBS:-$libs}
 $CC $CFLAGS -fcommon -I. -o "$out/$exe" src/*.c $libs
-strip "$out/$exe"
+${STRIP:-strip} "$out/$exe"

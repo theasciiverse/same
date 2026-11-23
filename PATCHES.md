@@ -82,6 +82,11 @@ links the system ncurses; Windows links PDCurses statically from MSYS2.
   (static, x86-64 and ARM64), macOS (Intel and Apple silicon) and Windows
   (x86-64 and ARM64), the system packages and SHA256SUMS, on a `*-av.*`
   tag.
+- `asciiverse/release-local.sh` (new): builds the static Linux x86-64
+  (musl-gcc and a static ncursesw) and Windows x86-64 (mingw-w64 and
+  PDCurses) archives on a Linux machine and attaches them to a tag's
+  release, for when the workflow cannot run; `asciiverse/build.sh` takes
+  `PLATFORM`, `CC`, `CFLAGS`, `LIBS` and `STRIP` for such cross builds.
 - `asciiverse/README.md` (new): the package README.
 - `asciiverse/record-preview.sh`, `asciiverse/drive.py`,
   `asciiverse/solve.py` (new): the catalog preview, a whole board cleared
