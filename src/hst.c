@@ -2,7 +2,7 @@
 
 int set_hst_fn() {
  set_dir();
- sprintf(hst_fn,"%s/.hst-%d-%d-%d",dir,(int)difficulty,width,height);
+ snprintf(hst_fn,sizeof hst_fn,"%s/.hst-%d-%d-%d",dir,(int)difficulty,width,height);
 
  return 0;
 }
@@ -32,8 +32,9 @@ int read_hst() {
   }
   return 1;
  }
- fgets(hsn,sizeof hsn,hstf);
- fscanf(hstf,"%i",&highscore);
+ if (fgets(hsn,sizeof hsn,hstf) == NULL) hsn[0] = '\0';
+ hsn[strcspn(hsn,"\r\n")] = '\0';
+ if (fscanf(hstf,"%i",&highscore) != 1) highscore = 0;
  fclose(hstf);
  return 0;
 }

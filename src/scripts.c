@@ -3,9 +3,8 @@
 int read_script(char fn[]) {
  FILE *f = fopen(fn,"r");
  if (f == NULL) {
-  char msg[64];
-  strcpy(msg,"Unable to load script ");
-  strcat(msg,fn);
+  char msg[1100];
+  snprintf(msg,sizeof msg,"Unable to load script %s",fn);
   draw_error(msg);
   return 1;
  }
@@ -42,20 +41,17 @@ int evaluate(char *cmd,bool script_mode) {
  // proceeding command. Example: `undonum`u will undo the board to its
  // original state.
  char str[32];
+ char next[1100];
  int i;
  if (cmd[0] == '`') {
-  for (i = 1; i < strlen(cmd); i++) {
-   if (cmd[i] == '`') {
-    break;
-   } else {
-    str[i-1] = cmd[i];
-   }
+  int j = 0;
+  for (i = 1; cmd[i] != '\0' && cmd[i] != '`'; i++) {
+   if (j < (int)sizeof str - 1) str[j++] = cmd[i];
   }
-  str[i-1] = '\0';
-  cmd = &cmd[i+1];
-  sprintf(str,"%d",evaluate(str,script_mode));
-  sprintf(str,"%s%s",str,cmd);
-  return evaluate(str,script_mode);
+  str[j] = '\0';
+  cmd = cmd[i] == '`' ? &cmd[i+1] : &cmd[i];
+  snprintf(next,sizeof next,"%d%s",evaluate(str,script_mode),cmd);
+  return evaluate(next,script_mode);
  }
 
 
@@ -63,9 +59,10 @@ int evaluate(char *cmd,bool script_mode) {
  char argument[32];
  char command[32];
  strcpy(command,"");
- if (sscanf(cmd,"%s %s",command,argument) > 1) {
-  strcat(command," ");
-  strcat(command,argument);
+ if (sscanf(cmd,"%31s %31s",command,argument) > 1) {
+  char both[64];
+  snprintf(both,sizeof both,"%s %s",command,argument);
+  return read_command(both,script_mode);
  }
 
  // Return command

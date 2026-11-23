@@ -15,16 +15,16 @@ int read_command(char inp[],bool script_mode) {
  char arg[32], key[32];
  strcpy(arg,"");
  strcpy(key,"");
- int num, ret;
+ int num, ret = 0;
 
  // If the command begins with any numbers, use them as multipliers. Not all
  // commands support multipliers. For instance, it doesn't make since to
  // run `e filename` multiple times in one command.
  int mult = -1;
- sscanf(inp,"%d%s %s",&mult,key,arg);
+ sscanf(inp,"%d%31s %31s",&mult,key,arg);
  if (mult < 0) {
   mult = 1;
-  sscanf(inp,"%s %s",key,arg);
+  sscanf(inp,"%31s %31s",key,arg);
  }
  if (mult <= 0) {
   return false;
@@ -287,9 +287,8 @@ int read_command(char inp[],bool script_mode) {
 
  // If we haven't found a command by now, the input must be invalid
  if (!script_mode) {
-  char text[1024] = "";
-  strcat(text,"Not a command: ");
-  strcat(text,key);
+  char text[64];
+  snprintf(text,sizeof text,"Not a command: %s",key);
   draw_error(text);
  }
  return ERROR;
@@ -297,7 +296,7 @@ int read_command(char inp[],bool script_mode) {
 
 int cursor_wait() {
  int current_char;
- bool reset_mult;
+ bool reset_mult = true;
  while (true) {
   move_cursor(pos.x,pos.y);
   current_char = (int)ask_char();

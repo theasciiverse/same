@@ -198,18 +198,14 @@ int move_cursor(int col,int row) {
 int prompt_str(const char msg[],char outstr[],int strn) {
  #if defined(__NCURSES__)
   int a,b;
-  char msg2[strn+4];
-  strcpy(msg2,msg);
-  if (msg2[strlen(msg2)-1] != ' ') {
-   strcat(msg2," ");
-  }
+  // strn is the size of outstr, so the answer has room for strn-1 chars
   attron(COLOR_PAIR(COLOR_DEFAULT));
   getmaxyx(stdscr,a,b);
-  mvprintw(a-1,0,"%s",msg2);
+  mvprintw(a-1,0,"%s%s",msg,msg[0] && msg[strlen(msg)-1] != ' ' ? " " : "");
   echo();
-  getnstr(outstr,strn);
+  getnstr(outstr,strn-1);
   noecho();
-  outstr[strn] = '\0';
+  outstr[strn-1] = '\0';
   return 0;
  #endif
  return -1;

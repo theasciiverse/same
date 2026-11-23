@@ -62,6 +62,9 @@
  #define KEY_RIGHT -5
 #endif
 
+// The largest board: the undo history (board_undo) keeps 64x64 blocks
+#define MAX_BOARD 64
+
 // Global variables
 bool checked_flags[FLAG_TOTAL];
 bool gameover; // Whether the game is over

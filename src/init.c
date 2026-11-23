@@ -29,10 +29,9 @@ int init(int argc, char *argv[]) {
  reset_board();
 
  set_dir();
- char file[1024];
- strcpy(file,dir);
- strcat(file,"/.samerc");
- read_script(file);
+ char file[1100];
+ snprintf(file,sizeof file,"%s/.samerc",dir);
+ if (access(file,F_OK) == 0) read_script(file);
 
  draw_logo();
  draw_hst();

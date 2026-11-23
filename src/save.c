@@ -4,14 +4,12 @@ int save_game(char in[]) {
  set_dir();
  char sfn[1024];
  char name[1024];
- strcpy(name,in);
+ snprintf(name,sizeof name,"%s",in);
  if (strcmp(name,"") == 0) {
-  prompt_str("Enter save game name:",name,24);
+  prompt_str("Enter save game name:",name,25);
  }
- strcpy(sfn,dir);
- strcat(sfn,"/");
- strcat(sfn,name);
- strcat(sfn,".sav");
+ name[24] = '\0';
+ snprintf(sfn,sizeof sfn,"%s/%s.sav",dir,name);
 
  if (strstr(name,"..") != NULL) {
   draw_error("Game names are not allowed to contain two dots.");
@@ -19,6 +17,10 @@ int save_game(char in[]) {
  }
 
  FILE *sgf = fopen(sfn,"w");
+ if (sgf == NULL) {
+  draw_error("Cannot open file: access denied");
+  return ERROR;
+ }
 
  if (fprintf(sgf,"%d\n%d\n%d\n%d\n%d\n%d\n%d\n",width,height,score,undonum,redonum,(int)difficulty,(int)god) < 0) {
   draw_error("Cannot open file: access denied");
@@ -47,10 +49,8 @@ int save_game(char in[]) {
  fclose(sgf);
 
  saved = true;
- char str[32];
- strcpy(str,"Saved game as '");
- strcat(str,name);
- strcat(str,"'.");
+ char str[64];
+ snprintf(str,sizeof str,"Saved game as '%s'.",name);
  draw_command(str);
 
  return 0;
@@ -66,14 +66,12 @@ int load_game(char in[]) {
  set_dir();
  char sfn[1024];
  char name[1024];
- strcpy(name,in);
+ snprintf(name,sizeof name,"%s",in);
  if (strcmp(name,"") == 0) {
-  prompt_str("Enter game name:",name,sizeof name-4);
+  prompt_str("Enter game name:",name,25);
  }
- strcpy(sfn,dir);
- strcat(sfn,"/");
- strcat(sfn,name);
- strcat(sfn,".sav");
+ name[24] = '\0';
+ snprintf(sfn,sizeof sfn,"%s/%s.sav",dir,name);
 
  FILE *sgf = fopen(sfn,"r");
  if (sgf == NULL) {
@@ -82,22 +80,26 @@ int load_game(char in[]) {
  }
 
  int t_width, t_height, t_score, t_undonum, t_redonum, t_difficulty, t_god;
- int t_score_undo[1024];
+ static int t_score_undo[1024];
+ // static: the undo history is far too big for the stack
+ static int t_board[64][64];
+ static int t_board_u[1024][64][64];
 
- fscanf(sgf,"%d",&t_width);
- fscanf(sgf,"%d",&t_height);
- fscanf(sgf,"%d",&t_score);
- fscanf(sgf,"%d",&t_undonum);
- fscanf(sgf,"%d",&t_redonum);
- fscanf(sgf,"%d",&t_difficulty);
- fscanf(sgf,"%d",&t_god);
-
- for (int u = 0; u <= t_undonum+t_redonum; u++) {
-  fscanf(sgf,"%d",&t_score_undo[u]);
+ if (fscanf(sgf,"%d %d %d %d %d %d %d",&t_width,&t_height,&t_score,
+            &t_undonum,&t_redonum,&t_difficulty,&t_god) != 7
+     || t_width < 1 || t_width > MAX_BOARD || t_height < 1
+     || t_height > MAX_BOARD || t_undonum < 0 || t_redonum < 0
+     || t_undonum + t_redonum >= 1024) {
+  fclose(sgf);
+  return lge();
  }
 
- int t_board[64][64];
- int t_board_u[128][64][64];
+ for (int u = 0; u <= t_undonum+t_redonum; u++) {
+  if (fscanf(sgf,"%d",&t_score_undo[u]) != 1) {
+   fclose(sgf);
+   return lge();
+  }
+ }
 
  if (feof(sgf)) lge();
  fgetc(sgf);
@@ -112,7 +114,10 @@ int load_game(char in[]) {
   for (int col = 0; col < t_width; col++) {
    for (int row = 0; row < t_height; row++) {
     t_board_u[u][col][row] = (int)fgetc(sgf)-1;
-    if (t_board_u[u][col][row]+1 == EOF) return lge();
+    if (t_board_u[u][col][row]+1 == EOF) {
+     fclose(sgf);
+     return lge();
+    }
    }
   }
  }
@@ -151,10 +156,8 @@ int load_game(char in[]) {
  draw_board();
  draw_undo();
 
- char str[32];
- strcpy(str,"Loaded game '");
- strcat(str,name);
- strcat(str,"'.");
+ char str[64];
+ snprintf(str,sizeof str,"Loaded game '%s'.",name);
  draw_command(str);
 
  return 0;
