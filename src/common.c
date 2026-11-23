@@ -41,9 +41,9 @@ bool confirm(const char* str) {
  strcpy(d,str);
  strcat(d," (y/n)");
  draw_command(d);
- char c;
- for (c = getchar(); c != 'y' && c!= 'Y' && c!= 'n' && c != 'N';
-      c = getchar()) {
+ int c;
+ for (c = ask_char(); c != 'y' && c!= 'Y' && c!= 'n' && c != 'N';
+      c = ask_char()) {
   draw_command(d);
  }
  clear_command();
