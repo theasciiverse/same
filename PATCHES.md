@@ -11,7 +11,8 @@ further to take from it; its one open issue (#4) is fixed below. The
 ## The game
 
 Unchanged: same board (32x16, four colours), scoring ((n-1) squared),
-keys, commands, scripting, texts and screen. It needs a terminal of at
+keys, commands, scripting and texts. The screen is the same, but centred
+in the terminal (below). It needs a terminal of at
 least 57x17 for the default board, its side panel and its longest
 question.
 
@@ -51,6 +52,16 @@ question.
 - **Mouse** (`src/graphics.c`, `src/command.c`): a click on a block
   lights up its group, a click on the lit group clears it, like Enter.
   The vi keys are unchanged.
+- **Centred** (`src/graphics.c`, `src/board.c`, `src/command.c`,
+  `src/save.c`): the board, the panel beside it and the command row
+  under them sit in the middle of the terminal instead of its top left
+  corner and bottom row, and move back to the middle when the terminal is
+  resized. Loading a saved game now redraws the whole screen, which also
+  brings back the "SameGame" title that a load used to leave blank.
+- **No "Highscore file does not exist"** (`src/hst.c`): the first game on
+  every board size started with that message, though the panel already
+  says "Not Set". A highscore file that exists but cannot be read is
+  still reported.
 - **Windows** (`src/same.h`, `src/sysdep.c`, `src/scripts.c`,
   `src/command.c`): builds with MinGW and PDCurses. `same.h` refused
   Windows outright; it now uses PDCurses' `curses.h` with ncurses-style
@@ -66,7 +77,8 @@ question.
 `asciiverse/build.sh`, not upstream's Makefile, builds it, with
 `-fcommon`: `same.h` defines its globals in the header itself, which GCC
 10 and Clang 11 no longer merge by default (the link fails with
-"multiple definition"). Linux links ncurses statically in Alpine, so the
+"multiple definition"). Upstream's Makefile now passes `-fcommon` too,
+so `make` as the README describes builds again. Linux links ncurses statically in Alpine, so the
 binary needs nothing installed and reads the system's terminfo; macOS
 links the system ncurses; Windows links PDCurses statically from MSYS2.
 
