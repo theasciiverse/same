@@ -16,6 +16,18 @@ int draw_board() {
  return 0;
 }
 
+// Draws the whole screen again from the game's state: after a resize moves
+// the box, or after a saved game is loaded.
+int redraw_screen() {
+ clear_all();
+ draw_logo();
+ draw_hst();
+ draw_score();
+ draw_board();
+ draw_undo();
+ return 0;
+}
+
 // Create a new random board.
 int reset_board() {
 

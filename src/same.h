@@ -119,6 +119,7 @@ bool animation; // Whether to show an animation at the end of the game
 
 // board.c
 int draw_board();
+int redraw_screen();
 bool is_block_alone(int col, int row);
 bool is_game_over();
 int reset_board();

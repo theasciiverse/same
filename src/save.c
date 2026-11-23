@@ -150,11 +150,7 @@ int load_game(char in[]) {
 
  fclose(sgf);
 
- clear_all();
- draw_hst();
- draw_score();
- draw_board();
- draw_undo();
+ redraw_screen();
 
  char str[64];
  snprintf(str,sizeof str,"Loaded game '%s'.",name);

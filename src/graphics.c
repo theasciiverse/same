@@ -19,6 +19,54 @@ int init_screen() {
  return -1;
 }
 
+// The game sits in the middle of the terminal: the board, the display panel
+// to its right and the command row under them, as one box. A box at least
+// as wide as the longest question ("Changing difficulty will reset the
+// board. Continue? (y/n)") keeps that question inside it.
+#define PANEL_WIDTH 24
+#define BOX_MIN_WIDTH 57
+
+static int box_width() {
+ int w = width + 1 + PANEL_WIDTH;
+ return w < BOX_MIN_WIDTH ? BOX_MIN_WIDTH : w;
+}
+
+static int box_height() {
+ return (height >= display_height ? height : display_height) + 1;
+}
+
+// Top left corner of the box on the screen, worked out afresh each time so
+// it follows a resize and a new board size.
+static void origin(int *oy,int *ox) {
+ #if defined(__NCURSES__)
+  int a,b;
+  getmaxyx(stdscr,a,b);
+  *ox = b > box_width() ? (b - box_width()) / 2 : 0;
+  *oy = a > box_height() ? (a - box_height()) / 2 : 0;
+ #endif
+}
+
+// The command row: right under the board and panel, or the bottom row of a
+// terminal too short for the box.
+static int command_row() {
+ int a,b,oy,ox;
+ getmaxyx(stdscr,a,b);
+ origin(&oy,&ox);
+ int row = oy + box_height() - 1;
+ return row < a ? row : a - 1;
+}
+
+// Where messages on the command row start: the box's left edge, moved left
+// when a long message would run off the screen.
+static int command_col(const char *text) {
+ int a,b,oy,ox;
+ getmaxyx(stdscr,a,b);
+ origin(&oy,&ox);
+ int len = (int)strlen(text);
+ if (ox + len > b) ox = b - len;
+ return ox < 0 ? 0 : ox;
+}
+
 // This function defines the block color scheme if applicable.
 int define_colors() {
  #if defined(__NCURSES__)
@@ -63,12 +111,14 @@ int clear_all() {
 // Draw a block to the board
 int draw_block(int col,int row,int block,bool hled) {
  #if defined(__NCURSES__)
+  int oy,ox;
+  origin(&oy,&ox);
   if (hled) {
    attron(COLOR_PAIR(block + 1));
-   mvprintw(row,col,"%c",blocks[block + blocknum + 1]);
+   mvprintw(oy + row,ox + col,"%c",blocks[block + blocknum + 1]);
   } else {
    attron(COLOR_PAIR(block + 1));
-   mvprintw(row,col,"%c",blocks[block + 1]);
+   mvprintw(oy + row,ox + col,"%c",blocks[block + 1]);
   }
   return 0;
  #endif
@@ -78,8 +128,10 @@ int draw_block(int col,int row,int block,bool hled) {
 // Clear a block, normally used when a chain is deleted
 int draw_clear_block(int col,int row){
  #if defined(__NCURSES__)
+  int oy,ox;
+  origin(&oy,&ox);
   attron(COLOR_PAIR(COLOR_DEFAULT));
-  mvprintw(row,col," ");
+  mvprintw(oy + row,ox + col," ");
   return 0;
  #endif
  return -1;
@@ -91,8 +143,9 @@ int clear_command() {
   int a,b;
   getmaxyx(stdscr,a,b);
   attron(COLOR_PAIR(COLOR_DEFAULT));
+  int row = command_row();
   for (int c = 0; c < b; c++) {
-   mvprintw(a-1,c," ");
+   mvprintw(row,c," ");
   }
   return 0;
  #endif
@@ -106,7 +159,7 @@ int draw_command(const char* text) {
   attron(COLOR_PAIR(COLOR_DEFAULT));
   int a,b;
   getmaxyx(stdscr,a,b);
-  mvprintw(a-1,0,"%s",text);
+  mvprintw(command_row(),command_col(text),"%s",text);
   refresh();
   return 0;
  #endif
@@ -119,10 +172,11 @@ int command_prompt(char key[]) {
   attron(COLOR_PAIR(COLOR_DEFAULT));
   int a,b;
   getmaxyx(stdscr,a,b);
-  mvprintw(a-1,0,":");
+  int col = command_col("");
+  mvprintw(command_row(),col,":");
   refresh();
   echo();
-  getnstr(key,get_max_x()-1);
+  getnstr(key,b - col - 1 > 0 ? b - col - 1 : 1);
   noecho();
   return 0;
  #endif
@@ -136,10 +190,13 @@ int draw_display(int row,const char* msg) {
   attron(COLOR_PAIR(COLOR_DEFAULT));
   int a,b;
   getmaxyx(stdscr,a,b);
-  for (int i = width + 1; i < b; i++) {
-   mvprintw(row,i," ");
+  int oy,ox;
+  origin(&oy,&ox);
+  int end = ox + box_width() < b ? ox + box_width() : b;
+  for (int i = ox + width + 1; i < end; i++) {
+   mvprintw(oy + row,i," ");
   }
-  mvprintw(row,width + 1,"%s",msg);
+  mvprintw(oy + row,ox + width + 1,"%s",msg);
   return 0;
  #endif
  return -1;
@@ -151,7 +208,7 @@ int draw_error(const char* msg) {
   int a,b;
   getmaxyx(stdscr,a,b);
   attron(COLOR_PAIR(COLOR_ERROR));
-  mvprintw(a-1,0,"%s",msg);
+  mvprintw(command_row(),command_col(msg),"%s",msg);
   return 0;
  #endif
  return -1;
@@ -194,8 +251,10 @@ bool get_click(int *col,int *row) {
   MEVENT ev;
   if (getmouse(&ev) != OK) return false;
   if (!(ev.bstate & (BUTTON1_PRESSED | BUTTON1_CLICKED))) return false;
-  *col = ev.x;
-  *row = ev.y;
+  int oy,ox;
+  origin(&oy,&ox);
+  *col = ev.x - ox;
+  *row = ev.y - oy;
   return true;
  #endif
  return false;
@@ -206,7 +265,9 @@ bool get_click(int *col,int *row) {
 // the only visible selection should be the entire chain.
 int move_cursor(int col,int row) {
  #if defined(__NCURSES__)
-  move(row,col);
+  int oy,ox;
+  origin(&oy,&ox);
+  move(oy + row,ox + col);
   return 0;
  #endif
  return -1;
@@ -219,7 +280,8 @@ int prompt_str(const char msg[],char outstr[],int strn) {
   // strn is the size of outstr, so the answer has room for strn-1 chars
   attron(COLOR_PAIR(COLOR_DEFAULT));
   getmaxyx(stdscr,a,b);
-  mvprintw(a-1,0,"%s%s",msg,msg[0] && msg[strlen(msg)-1] != ' ' ? " " : "");
+  int col = command_col(msg);
+  mvprintw(command_row(),col,"%s%s",msg,msg[0] && msg[strlen(msg)-1] != ' ' ? " " : "");
   echo();
   getnstr(outstr,strn-1);
   noecho();

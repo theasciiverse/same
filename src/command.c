@@ -422,6 +422,14 @@ int cursor_wait() {
     }
     break;
    }
+   // The terminal changed size: put the box back in the middle
+   case KEY_RESIZE: {
+    #if defined(_WIN32)
+     resize_term(0,0);
+    #endif
+    redraw_screen();
+    break;
+   }
    case '~': {
     if (god) score += multiplier;
     break;
