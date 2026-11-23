@@ -24,6 +24,7 @@ int check_flags(int argc, char *argv[]) {
    if (atoi(argv[i+1]) > 0) {
     checked_flags[FLAG_WIDTH] = true;
     width = atoi(argv[++i]);
+    if (width > MAX_BOARD) width = MAX_BOARD;
     continue;
    }
   }
@@ -33,6 +34,7 @@ int check_flags(int argc, char *argv[]) {
    if (atoi(argv[i+1]) > 0) {
     checked_flags[FLAG_HEIGHT] = true;
     height = atoi(argv[++i]);
+    if (height > MAX_BOARD) height = MAX_BOARD;
     continue;
    }
   }

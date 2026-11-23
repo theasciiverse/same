@@ -102,7 +102,7 @@ bool is_game_over() {
 
 // Sets the board width and starts a new game
 int set_width(int w,bool script_mode) {
- if (w > 0 && w <= get_max_x() - display_width) {
+ if (w > 0 && w <= MAX_BOARD && w <= get_max_x() - display_width) {
   clear_all();
   width = w;
   if (!script_mode) {
@@ -123,7 +123,7 @@ int set_width(int w,bool script_mode) {
 }
 
 int set_height(int h,bool script_mode) {
- if (h > 0 && h < get_max_y()) {
+ if (h > 0 && h <= MAX_BOARD && h < get_max_y()) {
   clear_all();
   height = h;
   if (!script_mode) {
