@@ -1,0 +1,139 @@
+# Builds same for the Asciiverse catalog: one archive per
+# target, named same-<target>.tar.gz (Linux, macOS) or .zip
+# (Windows), plus a SHA256SUMS file, attached to a GitHub release
+# (hub/catalog/SCHEMA.md, release.source = "github"), and .deb, .rpm, .apk
+# and Arch packages from the Linux binaries (asciiverse/nfpm.yaml).
+#
+# Tags look like v0.9-av.1: upstream's version, then our packaging
+# release. Linux builds are fully static (Alpine, ncurses linked in);
+# macOS builds run natively on a runner of each architecture against the
+# system's ncurses; Windows builds use MSYS2 with static PDCurses. A
+# target that fails to build is left out of the release rather than
+# holding back the others.
+
+name: asciiverse-release
+
+on:
+  push:
+    tags: ["*-av.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "existing tag to build and release"
+        required: true
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86_64-unknown-linux-musl, runner: ubuntu-24.04, arch: amd64 }
+          - { target: aarch64-unknown-linux-musl, runner: ubuntu-24.04-arm, arch: arm64 }
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - name: Build and package
+        run: |
+          docker run --rm -v "$PWD":/src -w /src alpine:3.22 sh -c '
+            sh asciiverse/build.sh &&
+            apk add --no-cache tar >/dev/null &&
+            sh asciiverse/package.sh ${{ matrix.target }} build/linux/same &&
+            chown -R '"$(id -u):$(id -g)"' build stage dist'
+          file build/linux/same
+      - name: System packages
+        run: |
+          v="${TAG#v}"; export VERSION="${v%%-av.*}" RELEASE="${v##*-av.}" ARCH=${{ matrix.arch }}
+          for p in deb rpm apk archlinux; do
+            docker run --rm -u "$(id -u):$(id -g)" -v "$PWD":/src -w /src \
+              -e VERSION -e RELEASE -e ARCH goreleaser/nfpm:v2.43.0 \
+              package --config asciiverse/nfpm.yaml --packager "$p" --target dist/
+          done
+          ls -l dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: dist/*
+
+  macos:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: aarch64-apple-darwin, runner: macos-15 }
+          - { target: x86_64-apple-darwin, runner: macos-15-intel }
+    runs-on: ${{ matrix.runner }}
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "11.0"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - name: Build and package
+        run: |
+          sh asciiverse/build.sh
+          file build/macos/same
+          otool -L build/macos/same
+          sh asciiverse/package.sh ${{ matrix.target }} build/macos/same
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: dist/*
+
+  windows:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: x86_64-pc-windows-msvc, runner: windows-2025, msystem: UCRT64, pkg: mingw-w64-ucrt-x86_64 }
+          - { target: aarch64-pc-windows-msvc, runner: windows-11-arm, msystem: CLANGARM64, pkg: mingw-w64-clang-aarch64 }
+    runs-on: ${{ matrix.runner }}
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.msystem }}
+          install: zip ${{ matrix.pkg }}-cc ${{ matrix.pkg }}-pdcurses
+      - name: Build and package
+        run: |
+          sh asciiverse/build.sh
+          file build/windows/same.exe
+          sh asciiverse/package.sh ${{ matrix.target }} build/windows/same.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: dist/*
+
+  release:
+    needs: [linux, macos, windows]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        working-directory: dist
+        run: sha256sum * > SHA256SUMS && cat SHA256SUMS
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$TAG" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1 \
+            || gh release create "$TAG" -R "$GITHUB_REPOSITORY" --title "same $TAG" \
+                 --notes "same ${TAG%%-av.*}, Josh Williams' SameGame with vi keys (github.com/jodawill/same), built for the Asciiverse catalog: one program for Linux, macOS and Windows, plus .deb, .rpm, .apk and Arch packages. GPL-2.0. Changes: see PATCHES.md."
+          gh release upload "$TAG" dist/* -R "$GITHUB_REPOSITORY" --clobber

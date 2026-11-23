@@ -1,0 +1,37 @@
+# System packages (.deb, .rpm, .apk, Arch) for same, built by nfpm from
+# the same static binary as the av archive. The release workflow sets
+# VERSION, RELEASE (our packaging release) and ARCH (amd64 or arm64).
+#
+# The program is /usr/bin/same, upstream's own name (no distribution
+# ships another). No .desktop file on purpose: av is the one place titles
+# are started from.
+name: same
+arch: ${ARCH}
+platform: linux
+version: ${VERSION}
+release: ${RELEASE}
+section: games
+priority: optional
+maintainer: Asciiverse <packages@asciiverse.sh>
+vendor: Asciiverse
+homepage: https://github.com/theasciiverse/same
+license: GPL-2.0-only
+description: |
+  SameGame for the terminal, with vi keys.
+  Clear groups of same-coloured blocks from a board of four colours; the
+  rest fall into the gaps, and a group of n blocks scores (n-1) squared.
+  Undo and redo, saved games, :commands and a small scripting language.
+  By Josh Williams (jodawill). Packaged by Asciiverse.
+contents:
+  - src: build/linux/same
+    dst: /usr/bin/same
+    file_info: { mode: 0755 }
+  - src: LICENSE
+    dst: /usr/share/doc/same/copyright
+    file_info: { mode: 0644 }
+  - src: asciiverse/README.md
+    dst: /usr/share/doc/same/README.md
+    file_info: { mode: 0644 }
+  - src: PATCHES.md
+    dst: /usr/share/doc/same/PATCHES.md
+    file_info: { mode: 0644 }
