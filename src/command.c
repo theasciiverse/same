@@ -404,6 +404,22 @@ int cursor_wait() {
     if (gameover) reset_board();
     break;
    }
+   // A click on a block selects its group; a click on the group that is
+   // already selected clears it, like Enter.
+   case KEY_MOUSE: {
+    int col, row;
+    if (!get_click(&col,&row)) break;
+    if (col < 0 || col >= width || row < 0 || row >= height) break;
+    if (hled[col][row]) {
+     pos.x = col;
+     pos.y = row;
+     delblock(pos.x,pos.y);
+    } else {
+     pos.x = col;
+     pos.y = row;
+    }
+    break;
+   }
    case '~': {
     if (god) score += multiplier;
     break;

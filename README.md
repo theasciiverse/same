@@ -35,7 +35,7 @@ Once you have these installed, 'cd' back to the "same" directory and type 'make'
 
 ##Controls
 
-To navigate, you may either use the arrows or 'hjkl'. To delete a section of blocks, press &lt;enter&gt;, 'dd', or 'x'.
+To navigate, you may either use the arrows or 'hjkl'. To delete a section of blocks, press &lt;enter&gt;, 'dd', or 'x'. With a mouse, click a block to select its group and click the group again to delete it.
 
 To undo, press 'u' or type ':u'. To redo, press 'r' or type ':r'. You can see how many undos and redos you have available on the right side of the screen.
 

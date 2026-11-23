@@ -61,6 +61,9 @@
 #ifndef KEY_RIGHT
  #define KEY_RIGHT -5
 #endif
+#ifndef KEY_MOUSE
+ #define KEY_MOUSE -6
+#endif
 
 // The largest board: the undo history (board_undo) keeps 64x64 blocks
 #define MAX_BOARD 64
@@ -151,6 +154,7 @@ int draw_error(const char *msg);
 int draw_logo();
 int get_max_x();
 int get_max_y();
+bool get_click(int *col,int *row);
 int init_screen();
 int move_cursor(int col,int row);
 int prompt_str(const char msg[],char outstr[],int strn);

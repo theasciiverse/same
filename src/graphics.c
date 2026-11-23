@@ -10,6 +10,10 @@ int init_screen() {
   start_color();
   intrflush(stdscr,false);
   keypad(stdscr,true);
+  // Left clicks select and clear groups; report the press itself so a
+  // click answers at once
+  mouseinterval(0);
+  mousemask(BUTTON1_PRESSED | BUTTON1_CLICKED,NULL);
   return 0;
  #endif
  return -1;
@@ -181,6 +185,20 @@ int get_max_y() {
   return a;
  #endif
  return -1;
+}
+
+// After ask_char() returned KEY_MOUSE: whether it was a left click, and
+// where.
+bool get_click(int *col,int *row) {
+ #if defined(__NCURSES__)
+  MEVENT ev;
+  if (getmouse(&ev) != OK) return false;
+  if (!(ev.bstate & (BUTTON1_PRESSED | BUTTON1_CLICKED))) return false;
+  *col = ev.x;
+  *row = ev.y;
+  return true;
+ #endif
+ return false;
 }
 
 // We refer to the selected block as the cursor position. If the graphics
