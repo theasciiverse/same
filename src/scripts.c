@@ -8,27 +8,27 @@ int read_script(char fn[]) {
   draw_error(msg);
   return 1;
  }
- size_t length = 0;
- char *line = NULL;
- char *token;
+ char line[1024];
 
- while (getline(&line,&length,f) != EOF) {
-  char *ptr;
-  // getline leaves the newline at the end of the string. Not cool
-  strtok_r(line,"\n",&ptr);
+ // Plain C (fgets, strchr) so this builds everywhere, Windows included
+ while (fgets(line,sizeof line,f) != NULL) {
+  line[strcspn(line,"\r\n")] = '\0';
 
   // Ignore everything on a line after a comment
-  token = strsep(&line,"//");
+  char *comment = strstr(line,"//");
+  if (comment != NULL) *comment = '\0';
 
   // Process each command separated by a semicolon
-  token = strtok_r(token,";",&ptr);
+  char *token = line;
   while (token != NULL) {
+   char *next = strchr(token,';');
+   if (next != NULL) *next++ = '\0';
 
    // Process statement
-   evaluate(token,true);
+   if (*token != '\0') evaluate(token,true);
 
    // Read next statement
-   token = strtok_r(NULL,";",&ptr);
+   token = next;
   }
  }
 

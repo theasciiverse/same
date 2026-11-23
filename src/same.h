@@ -16,13 +16,16 @@
 
 // Decide what graphics library to use based on the OS. Throw a compiler
 // error if the OS isn't known to be supported.
-#if defined(__APPLE__) || defined(__linux__)
+#if defined(__APPLE__) || defined(__linux__) || defined(__unix__)
  #define __UNISTD__
  #define __NCURSES__
  #define __SUPPORTED__
 #endif
-#if defined(WIN32) || defined(WIN64) || defined(MSDOS) || defined(_WIN32) || defined(_WIN64) || defined(__WIN32__) || defined(__WIN64__) || defined(__CYGWIN32__) || defined(__CYGWIN64__) || defined(__CYGWIN__)
- #error "Microsoft systems are not yet supported. Please volunteer to port this to your system."
+// Windows: MinGW (MSYS2) with PDCurses, which speaks the curses API
+#if defined(_WIN32)
+ #define __NCURSES__
+ #define __SUPPORTED__
+ #define PDC_NCMOUSE // ncurses-style getmouse() and MEVENT
 #endif
 #ifndef __SUPPORTED__
   #error "Your system is not supported."
@@ -30,17 +33,21 @@
 
 #include <stdlib.h>
 #include <string.h>
-#if defined(__UNISTD__)
- #include <unistd.h> // Requires a unix-like OS; used to check whether a
-#endif               // file exists. A different header will have to be
-                     // used to compile under Windows.
+#include <unistd.h> // access(); MinGW has it too
+#if defined(_WIN32)
+ #include <direct.h> // mkdir()
+#endif
 #include <time.h>
 #include <sys/stat.h>
 #include <stdbool.h>
 #include <stdio.h>
 
 // Include headers for graphics libraries
-#if defined(__NCURSES__)
+#if defined(__NCURSES__) && defined(_WIN32)
+ #include <curses.h>
+ #define COLOR_DEFAULT 20
+ #define COLOR_ERROR   21
+#elif defined(__NCURSES__)
  #include <ncurses.h>
  #define COLOR_DEFAULT 20
  #define COLOR_ERROR   21

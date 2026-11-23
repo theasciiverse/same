@@ -1,5 +1,8 @@
 #include "same.h"
-#if defined(__APPLE__) || defined(__linux__)
+#if defined(_WIN32)
+ // from kernel32; windows.h would clash with PDCurses' names
+ __declspec(dllimport) void __stdcall Sleep(unsigned long ms);
+#elif defined(__UNISTD__)
  #define NANOSLEEP_AVAILABLE
 #else
  #include <limits.h>
@@ -75,6 +78,9 @@ int rest() {
   time1.tv_sec = 0;
   time1.tv_nsec = 25000000;
   nanosleep(&time1,&time2);
+  return 0;
+ #elif defined(_WIN32)
+  Sleep(25);
   return 0;
  #else
   // If we can't find a suitable function to sleep less than a second, we'll

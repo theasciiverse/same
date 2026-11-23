@@ -345,6 +345,8 @@ int cursor_wait() {
    }
    case 'x': {
    }
+   case '\r':
+   case KEY_ENTER:
    case '\n': {
     for (int i = 0; i < multiplier; i++) {
      delblock(pos.x,pos.y);
