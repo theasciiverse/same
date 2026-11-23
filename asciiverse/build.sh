@@ -37,8 +37,13 @@ case $platform in
     if [ -f /etc/alpine-release ]; then libs="-static -lncursesw"; else libs="-lncurses"; fi
     exe=same ;;
   macos)   libs="-lncurses"; exe=same ;;
-  windows) libs="-static -lpdcurses"; exe=same.exe ;;
+  windows) libs="-static -lpdcurses_wincon"; exe=same.exe ;;
 esac
+# MSYS2's pdcurses keeps curses.h in include/pdcurses and the console
+# build as libpdcurses_wincon.a
+inc=
+[ "$platform" = windows ] && [ -d "${MSYSTEM_PREFIX:-/nonexistent}/include/pdcurses" ] \
+  && inc="-I$MSYSTEM_PREFIX/include/pdcurses"
 libs=${LIBS:-$libs}
-$CC $CFLAGS -fcommon -I. -o "$out/$exe" src/*.c $libs
+$CC $CFLAGS $inc -fcommon -I. -o "$out/$exe" src/*.c $libs
 ${STRIP:-strip} "$out/$exe"
