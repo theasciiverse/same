@@ -37,13 +37,15 @@ case $platform in
     if [ -f /etc/alpine-release ]; then libs="-static -lncursesw"; else libs="-lncurses"; fi
     exe=same ;;
   macos)   libs="-lncurses"; exe=same ;;
-  windows) libs="-static -lpdcurses_wincon"; exe=same.exe ;;
+  windows) libs="-static -lpdcurses_wincon -lwinmm"; exe=same.exe ;;
 esac
-# MSYS2's pdcurses keeps curses.h in include/pdcurses and the console
-# build as libpdcurses_wincon.a
+# MSYS2's pdcurses (PDCursesMod) keeps curses.h in include/pdcurses and
+# the console build as libpdcurses_wincon.a, built wide and UTF-8 (the
+# header's endwin must match: its pdcurses.h sets these two), and plays
+# sounds through winmm
 inc=
 [ "$platform" = windows ] && [ -d "${MSYSTEM_PREFIX:-/nonexistent}/include/pdcurses" ] \
-  && inc="-I$MSYSTEM_PREFIX/include/pdcurses"
+  && inc="-I$MSYSTEM_PREFIX/include/pdcurses -DPDC_WIDE -DPDC_FORCE_UTF8"
 libs=${LIBS:-$libs}
 $CC $CFLAGS $inc -fcommon -I. -o "$out/$exe" src/*.c $libs
 ${STRIP:-strip} "$out/$exe"
